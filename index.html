@@ -502,7 +502,6 @@
             try {
                 initGroups();
                 
-                // تحميل الإعدادات
                 var savedSettings = localStorage.getItem('appSettings_v1');
                 if (savedSettings) {
                     try {
@@ -512,7 +511,6 @@
                     } catch(e) { console.warn('Settings parse error', e); }
                 }
                 
-                // تحميل المجموعات المحفوظة
                 var savedGroups = localStorage.getItem('myGroups_v4');
                 if (savedGroups) {
                     try {
@@ -529,7 +527,6 @@
                     } catch(e) { console.warn('Groups parse error', e); }
                 }
                 
-                // تحميل الخزانات مع try-catch
                 try {
                     var savedTanks = localStorage.getItem('myTanks_v4');
                     if (savedTanks) {
@@ -548,13 +545,11 @@
                     saveTanks();
                 }
                 
-                // تحميل القراءات
                 try {
                     var savedRecs = localStorage.getItem('myRecords_v4');
                     records = savedRecs ? JSON.parse(savedRecs) : [];
                 } catch(e) { records = []; }
                 
-                // تحميل العينات
                 try {
                     var savedSamples = localStorage.getItem('mySamples_v1');
                     samples = savedSamples ? JSON.parse(savedSamples) : [];
@@ -562,7 +557,6 @@
                 
                 console.log('Tanks:', tanks.length, 'Records:', records.length, 'Samples:', samples.length);
                 
-                // التواريخ والوقت
                 var now = new Date();
                 document.getElementById('currentDate').textContent = now.toLocaleDateString('ar-EG', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
                 
@@ -577,7 +571,6 @@
                 document.getElementById('inventoryDate').value = todayStr;
                 document.getElementById('groupInventoryDate').value = todayStr;
                 
-                // بناء القوائم
                 buildTankDropdown();
                 buildSampleTankDropdown();
                 fillTankFilter();
@@ -590,7 +583,6 @@
                 updateStats();
                 fillGroupFilter();
                 
-                // إغلاق القائمة عند النقر خارجها
                 document.addEventListener('click', function(e) {
                     var wrapper = e.target.closest('.select-wrapper');
                     if (!wrapper) {
@@ -599,13 +591,14 @@
                     }
                 });
                 
-                setSyncStatus('ok', '✅ متزامن').          } catch(e) {
-    var errMsg = e.message || String(e);
-    console.error('Init error:', e);
-    setSyncStatus('error', '❌ خطأ: ' + errMsg);
-    showToast('❌ خطأ: ' + errMsg);
-    return;
-}
+                setSyncStatus('ok', '✅ متزامن');
+                
+            } catch(e) {
+                var errMsg = e.message || String(e);
+                console.error('Init error:', e);
+                setSyncStatus('error', '❌ خطأ: ' + errMsg);
+                showToast('❌ خطأ: ' + errMsg);
+                return;
             }
             console.log('=== INIT DONE ===');
         }
@@ -617,12 +610,10 @@
             el.textContent = message;
         }
 
-        // === دالة المزامنة (جديدة) ===
         function syncNow() {
             if (isSyncing) return;
             isSyncing = true;
             setSyncStatus('pending', '🔄 جاري المزامنة...');
-            // إعادة تهيئة كاملة لضمان تحديث كل شيء
             try {
                 init();
                 showToast('✅ تمت المزامنة');
@@ -636,9 +627,7 @@
             var newPass = document.getElementById('appPassword').value;
             var newCount = parseInt(document.getElementById('defaultTankCount').value) || 62;
             
-            if (newPass.length >= 4) {
-                APP_PASSWORD = newPass;
-            }
+            if (newPass.length >= 4) APP_PASSWORD = newPass;
             DEFAULT_TANK_COUNT = newCount;
             
             localStorage.setItem('appSettings_v1', JSON.stringify({
@@ -1377,7 +1366,6 @@
                         return;
                     }
                     
-                    // استعادة البيانات
                     if (backupData.settings) {
                         if (backupData.settings.password) APP_PASSWORD = backupData.settings.password;
                         if (backupData.settings.defaultTankCount) DEFAULT_TANK_COUNT = backupData.settings.defaultTankCount;
@@ -1389,13 +1377,11 @@
                     groupList = backupData.groups || [];
                     nextId = backupData.nextId || 100;
                     
-                    // إعادة بناء groups object
                     groups = {};
                     groupList.forEach(function(g) {
                         groups[g.key] = {name: g.name, color: g.color};
                     });
                     
-                    // حفظ كل شيء
                     saveTanks();
                     saveRecords();
                     saveSamples();
@@ -1405,7 +1391,6 @@
                         defaultTankCount: DEFAULT_TANK_COUNT
                     }));
                     
-                    // إعادة التهيئة
                     init();
                     
                     showToast('✅ تم استعادة النسخة الاحتياطية بنجاح');
