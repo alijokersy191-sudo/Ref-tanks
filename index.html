@@ -471,6 +471,18 @@
             });
         }
 
+        // === دوال مساعدة للمجموعات ===
+        function getGroupColor(groupKey) {
+            return groups[groupKey] ? groups[groupKey].color : '#9ca3af';
+        }
+        function getGroupName(groupKey) {
+            return groups[groupKey] ? groups[groupKey].name : 'غير معروف';
+        }
+        function safeGroupStyle(groupKey) {
+            var color = getGroupColor(groupKey);
+            return 'background:' + color + '33; color:' + color;
+        }
+
         // === شاشة الدخول ===
         function checkPassword(e) {
             if (e.key === 'Enter') checkLogin();
@@ -496,7 +508,7 @@
             document.getElementById('loginError').classList.add('hidden');
         }
 
-        // === التهيئة الرئيسية (مُحسَّنة مع try…catch) ===
+        // === التهيئة الرئيسية ===
         function init() {
             console.log('=== INIT START ===');
             try {
@@ -508,7 +520,7 @@
                         var settings = JSON.parse(savedSettings);
                         if (settings.password) APP_PASSWORD = settings.password;
                         if (settings.defaultTankCount) DEFAULT_TANK_COUNT = settings.defaultTankCount;
-                    } catch(e) { console.warn('Settings parse error', e); }
+                    } catch(e) {}
                 }
                 
                 var savedGroups = localStorage.getItem('myGroups_v4');
@@ -524,7 +536,7 @@
                                 }
                             }
                         }
-                    } catch(e) { console.warn('Groups parse error', e); }
+                    } catch(e) {}
                 }
                 
                 try {
@@ -536,7 +548,6 @@
                         throw new Error('No saved tanks');
                     }
                 } catch(e) {
-                    console.warn('Tanks init error, creating defaults', e);
                     tanks = [];
                     for (var i = 1; i <= DEFAULT_TANK_COUNT; i++) {
                         tanks.push({id: i, name: 'خزان ' + i, factor: 1, configured: false, group: 'none'});
@@ -545,6 +556,14 @@
                     saveTanks();
                 }
                 
+                // ✅ إصلاح أي خزانات بمجموعات غير موجودة
+                tanks.forEach(function(t) {
+                    if (!groups[t.group]) {
+                        console.warn('تصحيح مجموعة للخزان ' + t.id + ': ' + t.group);
+                        t.group = 'none';
+                    }
+                });
+
                 try {
                     var savedRecs = localStorage.getItem('myRecords_v4');
                     records = savedRecs ? JSON.parse(savedRecs) : [];
@@ -554,8 +573,6 @@
                     var savedSamples = localStorage.getItem('mySamples_v1');
                     samples = savedSamples ? JSON.parse(savedSamples) : [];
                 } catch(e) { samples = []; }
-                
-                console.log('Tanks:', tanks.length, 'Records:', records.length, 'Samples:', samples.length);
                 
                 var now = new Date();
                 document.getElementById('currentDate').textContent = now.toLocaleDateString('ar-EG', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
@@ -684,7 +701,7 @@
                 div.setAttribute('data-name', t.name);
                 div.innerHTML = '<div class="flex justify-between items-center">' +
                     '<span>' + (t.configured ? '✓' : '⚠️') + ' ' + t.name + '</span>' +
-                    '<span class="group-badge" style="background:' + groups[t.group].color + '33; color:' + groups[t.group].color + '">' + groups[t.group].name + '</span>' +
+                    '<span class="group-badge" style="' + safeGroupStyle(t.group) + '">' + getGroupName(t.group) + '</span>' +
                     '</div>';
                 div.onclick = function() { pickTank(String(t.id), t.name); };
                 list.appendChild(div);
@@ -700,7 +717,7 @@
                 div.className = 'select-option';
                 div.setAttribute('data-id', String(t.id));
                 div.setAttribute('data-name', t.name);
-                div.innerHTML = '<span>' + t.name + ' <span class="group-badge" style="background:' + groups[t.group].color + '33; color:' + groups[t.group].color + '">' + groups[t.group].name + '</span></span>';
+                div.innerHTML = '<span>' + t.name + ' <span class="group-badge" style="' + safeGroupStyle(t.group) + '">' + getGroupName(t.group) + '</span></span>';
                 div.onclick = function() { pickSampleTank(String(t.id), t.name); };
                 list.appendChild(div);
             });
@@ -781,7 +798,7 @@
             var tank = getTank(id);
             if (!tank || !info) { if (info) info.innerHTML = ''; return; }
             info.innerHTML = '<span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs">📊 1 سم = ' + tank.factor.toFixed(3) + ' م³</span>' +
-                '<span class="px-3 py-1 rounded-full text-xs" style="background:' + groups[tank.group].color + '33; color:' + groups[tank.group].color + '">' + groups[tank.group].name + '</span>';
+                '<span class="px-3 py-1 rounded-full text-xs" style="' + safeGroupStyle(tank.group) + '">' + getGroupName(tank.group) + '</span>';
             calcVol();
         }
 
@@ -974,7 +991,7 @@
                 card.innerHTML = '<div class="flex justify-between mb-2"><span class="font-bold">' + t.name + '</span>' +
                     '<span class="text-xs ' + (t.configured ? 'text-green-600' : 'text-yellow-600') + '">' + (t.configured ? '✓' : '⚠️') + '</span></div>' +
                     '<p class="text-sm text-gray-500 mb-2">1 سم = ' + t.factor.toFixed(3) + ' م³</p>' +
-                    '<span class="group-badge mb-3" style="background:' + groups[t.group].color + '33; color:' + groups[t.group].color + '">' + groups[t.group].name + '</span>' +
+                    '<span class="group-badge mb-3" style="' + safeGroupStyle(t.group) + '">' + getGroupName(t.group) + '</span>' +
                     '<div class="flex gap-2"><button type="button" onclick="openEditTank(' + t.id + ')" class="flex-1 bg-blue-50 text-blue-600 py-2 rounded text-sm">تعديل</button>' +
                     '<button type="button" onclick="openDelete(' + t.id + ', \'' + escapedName + '\', \'tank\')" class="flex-1 bg-red-50 text-red-600 py-2 rounded text-sm">حذف</button></div>';
                 grid.appendChild(card);
@@ -1129,7 +1146,7 @@
                 var r = filtered[i];
                 var water = r.water > 0 ? '<span class="text-blue-600">' + r.water.toFixed(2) + '</span>' : '-';
                 body.innerHTML += '<tr class="border-b hover:bg-gray-50"><td class="p-3">' + r.date + '</td><td class="p-3">' + r.time + '</td><td class="p-3">' + r.tankName + '</td>' +
-                    '<td class="p-3"><span class="group-badge" style="background:' + groups[r.group].color + '33; color:' + groups[r.group].color + '">' + groups[r.group].name + '</span></td>' +
+                    '<td class="p-3"><span class="group-badge" style="' + safeGroupStyle(r.group) + '">' + getGroupName(r.group) + '</span></td>' +
                     '<td class="p-3">' + r.level.toFixed(2) + '</td><td class="p-3">' + water + '</td>' +
                     '<td class="p-3 font-bold text-blue-600">' + r.volume.toFixed(3) + '</td>' +
                     '<td class="p-3"><button type="button" onclick="openDelete(' + r.id + ', \'هذا السجل\', \'record\')" class="text-red-600 hover:text-red-800">حذف</button></td></tr>';
@@ -1163,7 +1180,7 @@
                 var volDisplay = lastRec ? lastRec.volume.toFixed(3) : '-';
                 
                 body.innerHTML += '<tr class="border-b hover:bg-gray-50"><td class="p-3 font-medium">' + t.name + '</td>' +
-                    '<td class="p-3"><span class="group-badge" style="background:' + groups[t.group].color + '33; color:' + groups[t.group].color + '">' + groups[t.group].name + '</span></td>' +
+                    '<td class="p-3"><span class="group-badge" style="' + safeGroupStyle(t.group) + '">' + getGroupName(t.group) + '</span></td>' +
                     '<td class="p-3">' + dateDisplay + '</td><td class="p-3">' + timeDisplay + '</td>' +
                     '<td class="p-3">' + levelDisplay + '</td><td class="p-3">' + water + '</td>' +
                     '<td class="p-3 font-bold text-blue-600">' + volDisplay + '</td></tr>';
@@ -1324,10 +1341,7 @@
             var backupData = {
                 version: '1.0',
                 exportDate: new Date().toISOString(),
-                settings: {
-                    password: APP_PASSWORD,
-                    defaultTankCount: DEFAULT_TANK_COUNT
-                },
+                settings: { password: APP_PASSWORD, defaultTankCount: DEFAULT_TANK_COUNT },
                 tanks: tanks,
                 records: records,
                 samples: samples,
@@ -1510,7 +1524,6 @@
             showToast('✅ تم تصدير العينات');
         }
 
-        // === بدء ===
         window.onload = function() {
             if (typeof window.jspdf === 'undefined') {
                 console.log('jsPDF not loaded yet, waiting...');
