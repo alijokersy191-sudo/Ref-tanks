@@ -600,11 +600,14 @@
                 });
                 
                 setSyncStatus('ok', '✅ متزامن');
-                
-            } catch(e) {
-                console.error('Init error:', e);
-                setSyncStatus('error', '❌ خطأ في التهيئة');
-                return;
+
+                } catch(e) {
+    var errMsg = e.message || String(e);
+    console.error('Init error:', e);
+    setSyncStatus('error', '❌ خطأ: ' + errMsg);
+    showToast('❌ خطأ: ' + errMsg);
+    return;
+}
             }
             console.log('=== INIT DONE ===');
         }
