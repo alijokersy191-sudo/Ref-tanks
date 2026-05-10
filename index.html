@@ -15,7 +15,6 @@
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 200; justify-content: center; align-items: center; }
         .modal.active { display: flex; }
         .group-badge { display: inline-block; padding: 4px 12px; border-radius: 16px; font-size: 0.75rem; font-weight: 600; }
-        
         .select-wrapper { position: relative; }
         .select-input { width: 100%; padding: 12px 40px 12px 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px; cursor: pointer; }
         .select-input:focus { outline: none; border-color: #2563eb; }
@@ -25,12 +24,10 @@
         .select-option { padding: 10px 12px; cursor: pointer; border-bottom: 1px solid #f3f4f6; }
         .select-option:hover { background-color: #eff6ff; }
         .no-results { padding: 20px; text-align: center; color: #9ca3af; }
-        
         #appContent { display: none; }
         #loginScreen { display: block; }
         #appContent.active { display: block; }
         #loginScreen.hidden { display: none; }
-        
         .sync-status { font-size: 0.75rem; padding: 2px 8px; border-radius: 12px; }
         .sync-ok { background: #d1fae5; color: #065f46; }
         .sync-error { background: #fee2e2; color: #991b1b; }
@@ -51,18 +48,11 @@
                 <h1 class="text-2xl font-bold text-gray-800">🔐 نظام الخزانات</h1>
                 <p class="text-gray-500 mt-2">أدخل كلمة المرور للدخول</p>
             </div>
-            
             <div class="space-y-4">
-                <input type="password" id="passwordInput" class="w-full p-4 border-2 border-gray-300 rounded-xl text-center text-2xl tracking-widest" 
-                    placeholder="••••" maxlength="4" onkeypress="checkPassword(event)">
-                
-                <button onclick="checkLogin()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl transition-colors">
-                    دخول
-                </button>
-                
+                <input type="password" id="passwordInput" class="w-full p-4 border-2 border-gray-300 rounded-xl text-center text-2xl tracking-widest" placeholder="••••" maxlength="4" onkeypress="checkPassword(event)">
+                <button onclick="checkLogin()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl transition-colors">دخول</button>
                 <p id="loginError" class="text-red-500 text-center hidden">❌ كلمة المرور غير صحيحة</p>
             </div>
-            
             <p class="text-center text-xs text-gray-400 mt-6">نسخة تجريبية - جميع الحقوق محفوظة</p>
         </div>
     </div>
@@ -84,7 +74,7 @@
                 </div>
                 <div class="text-right">
                     <div class="text-sm text-gray-500" id="currentDate"></div>
-                    <div id="syncStatus" class="sync-status sync-pending mt-1 inline-block">🔄 جاري التحميل...</div>
+                    <div id="syncStatus" class="sync-status sync-pending mt-1 inline-block">⏳ بانتظار التهيئة...</div>
                 </div>
             </div>
             <nav class="max-w-7xl mx-auto px-4 flex gap-2 border-t overflow-x-auto">
@@ -307,7 +297,7 @@
                         <button type="button" onclick="openAddTank()" class="bg-green-600 text-white px-4 py-2 rounded-lg">+ إضافة خزان</button>
                     </div>
                     
-                    <!-- Backup & Restore Section (NEW) -->
+                    <!-- Backup & Restore Section -->
                     <div class="bg-gradient-to-r from-purple-50 to-blue-50 p-4 rounded-lg mb-6 border-2 border-purple-200">
                         <h3 class="font-bold mb-3 text-purple-800">💾 النسخ الاحتياطي والاستعادة</h3>
                         <p class="text-sm text-gray-600 mb-3">احفظ نسخة من جميع بياناتك (الخزانات، القراءات، العينات، المجموعات، الإعدادات)</p>
@@ -370,7 +360,7 @@
                     </div>
                     
                     <div class="flex gap-2 mb-4">
-                        <input type="text" id="configSearch" placeholder="?? بحث عن خزان..." class="flex-1 p-3 border rounded-lg" oninput="showConfig()">
+                        <input type="text" id="configSearch" placeholder="🔍 بحث عن خزان..." class="flex-1 p-3 border rounded-lg" oninput="showConfig()">
                         <button type="button" onclick="syncNow()" class="bg-purple-600 text-white px-4 py-3 rounded-lg hover:bg-purple-700">🔄 مزامنة</button>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-96 overflow-y-auto" id="configGrid"></div>
@@ -454,7 +444,6 @@
         var DEFAULT_TANK_COUNT = 62;
         var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby5PN6CQBNKJW3akInbHthx5jE_0E-KmpOC_n1nB3twl1XYLtIbmtq40hxl_zeZ7vQ8qw/exec';
         
-        // === البيانات ===
         var tanks = [];
         var records = [];
         var samples = [];
@@ -507,96 +496,116 @@
             document.getElementById('loginError').classList.add('hidden');
         }
 
-        // === التهيئة الرئيسية ===
+        // === التهيئة الرئيسية (مُحسَّنة مع try…catch) ===
         function init() {
             console.log('=== INIT START ===');
-            initGroups();
-            
-            // تحميل الإعدادات
-            var savedSettings = localStorage.getItem('appSettings_v1');
-            if (savedSettings) {
-                var settings = JSON.parse(savedSettings);
-                if (settings.password) APP_PASSWORD = settings.password;
-                if (settings.defaultTankCount) DEFAULT_TANK_COUNT = settings.defaultTankCount;
-            }
-            
-            // تحميل المجموعات المحفوظة
-            var savedGroups = localStorage.getItem('myGroups_v4');
-            if (savedGroups) {
-                var parsed = JSON.parse(savedGroups);
-                for (var i = 0; i < parsed.length; i++) {
-                    for (var j = 0; j < groupList.length; j++) {
-                        if (groupList[j].key === parsed[i].key) {
-                            groupList[j].name = parsed[i].name;
-                            groupList[j].color = parsed[i].color;
-                            groups[parsed[i].key] = {name: parsed[i].name, color: parsed[i].color};
+            try {
+                initGroups();
+                
+                // تحميل الإعدادات
+                var savedSettings = localStorage.getItem('appSettings_v1');
+                if (savedSettings) {
+                    try {
+                        var settings = JSON.parse(savedSettings);
+                        if (settings.password) APP_PASSWORD = settings.password;
+                        if (settings.defaultTankCount) DEFAULT_TANK_COUNT = settings.defaultTankCount;
+                    } catch(e) { console.warn('Settings parse error', e); }
+                }
+                
+                // تحميل المجموعات المحفوظة
+                var savedGroups = localStorage.getItem('myGroups_v4');
+                if (savedGroups) {
+                    try {
+                        var parsed = JSON.parse(savedGroups);
+                        for (var i = 0; i < parsed.length; i++) {
+                            for (var j = 0; j < groupList.length; j++) {
+                                if (groupList[j].key === parsed[i].key) {
+                                    groupList[j].name = parsed[i].name;
+                                    groupList[j].color = parsed[i].color;
+                                    groups[parsed[i].key] = {name: parsed[i].name, color: parsed[i].color};
+                                }
+                            }
                         }
+                    } catch(e) { console.warn('Groups parse error', e); }
+                }
+                
+                // تحميل الخزانات مع try-catch
+                try {
+                    var savedTanks = localStorage.getItem('myTanks_v4');
+                    if (savedTanks) {
+                        tanks = JSON.parse(savedTanks);
+                        nextId = parseInt(localStorage.getItem('myNextId_v4') || '100');
+                    } else {
+                        throw new Error('No saved tanks');
                     }
+                } catch(e) {
+                    console.warn('Tanks init error, creating defaults', e);
+                    tanks = [];
+                    for (var i = 1; i <= DEFAULT_TANK_COUNT; i++) {
+                        tanks.push({id: i, name: 'خزان ' + i, factor: 1, configured: false, group: 'none'});
+                    }
+                    nextId = DEFAULT_TANK_COUNT + 1;
+                    saveTanks();
                 }
+                
+                // تحميل القراءات
+                try {
+                    var savedRecs = localStorage.getItem('myRecords_v4');
+                    records = savedRecs ? JSON.parse(savedRecs) : [];
+                } catch(e) { records = []; }
+                
+                // تحميل العينات
+                try {
+                    var savedSamples = localStorage.getItem('mySamples_v1');
+                    samples = savedSamples ? JSON.parse(savedSamples) : [];
+                } catch(e) { samples = []; }
+                
+                console.log('Tanks:', tanks.length, 'Records:', records.length, 'Samples:', samples.length);
+                
+                // التواريخ والوقت
+                var now = new Date();
+                document.getElementById('currentDate').textContent = now.toLocaleDateString('ar-EG', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
+                
+                var todayStr = now.toISOString().slice(0, 10);
+                var timeStr = now.toTimeString().slice(0, 5);
+                
+                document.getElementById('entryDate').value = todayStr;
+                document.getElementById('entryTime').value = timeStr;
+                document.getElementById('sampleDate').value = todayStr;
+                document.getElementById('sampleTime').value = timeStr;
+                document.getElementById('reportMonth').value = todayStr.slice(0, 7);
+                document.getElementById('inventoryDate').value = todayStr;
+                document.getElementById('groupInventoryDate').value = todayStr;
+                
+                // بناء القوائم
+                buildTankDropdown();
+                buildSampleTankDropdown();
+                fillTankFilter();
+                showConfig();
+                showReport();
+                showSamples();
+                showInventory();
+                showGroupInventory();
+                showGroups();
+                updateStats();
+                fillGroupFilter();
+                
+                // إغلاق القائمة عند النقر خارجها
+                document.addEventListener('click', function(e) {
+                    var wrapper = e.target.closest('.select-wrapper');
+                    if (!wrapper) {
+                        var dropdowns = document.querySelectorAll('.select-dropdown');
+                        dropdowns.forEach(function(d) { d.classList.remove('visible'); });
+                    }
+                });
+                
+                setSyncStatus('ok', '✅ متزامن');
+                
+            } catch(e) {
+                console.error('Init error:', e);
+                setSyncStatus('error', '❌ خطأ في التهيئة');
+                return;
             }
-            
-            // تحميل الخزانات
-            var savedTanks = localStorage.getItem('myTanks_v4');
-            if (savedTanks) {
-                tanks = JSON.parse(savedTanks);
-                nextId = parseInt(localStorage.getItem('myNextId_v4') || '100');
-            } else {
-                tanks = [];
-                for (var i = 1; i <= DEFAULT_TANK_COUNT; i++) {
-                    tanks.push({id: i, name: 'خزان ' + i, factor: 1, configured: false, group: 'none'});
-                }
-                nextId = DEFAULT_TANK_COUNT + 1;
-                saveTanks();
-            }
-            
-            // تحميل القراءات
-            var savedRecs = localStorage.getItem('myRecords_v4');
-            records = savedRecs ? JSON.parse(savedRecs) : [];
-            
-            // تحميل العينات
-            var savedSamples = localStorage.getItem('mySamples_v1');
-            samples = savedSamples ? JSON.parse(savedSamples) : [];
-            
-            console.log('Tanks:', tanks.length, 'Records:', records.length, 'Samples:', samples.length);
-            
-            // التواريخ والوقت
-            var now = new Date();
-            document.getElementById('currentDate').textContent = now.toLocaleDateString('ar-EG', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
-            
-            var todayStr = now.toISOString().slice(0, 10);
-            var timeStr = now.toTimeString().slice(0, 5);
-            
-            document.getElementById('entryDate').value = todayStr;
-            document.getElementById('entryTime').value = timeStr;
-            document.getElementById('sampleDate').value = todayStr;
-            document.getElementById('sampleTime').value = timeStr;
-            document.getElementById('reportMonth').value = todayStr.slice(0, 7);
-            document.getElementById('inventoryDate').value = todayStr;
-            document.getElementById('groupInventoryDate').value = todayStr;
-            
-            // بناء القوائم
-            buildTankDropdown();
-            buildSampleTankDropdown();
-            fillTankFilter();
-            showConfig();
-            showReport();
-            showSamples();
-            showInventory();
-            showGroupInventory();
-            showGroups();
-            updateStats();
-            fillGroupFilter();
-            
-            // إغلاق القائمة عند النقر خارجها
-            document.addEventListener('click', function(e) {
-                var wrapper = e.target.closest('.select-wrapper');
-                if (!wrapper) {
-                    var dropdowns = document.querySelectorAll('.select-dropdown');
-                    dropdowns.forEach(function(d) { d.classList.remove('visible'); });
-                }
-            });
-            
-            setSyncStatus('ok', '✅ متزامن');
             console.log('=== INIT DONE ===');
         }
 
@@ -605,6 +614,21 @@
             if (!el) return;
             el.className = 'sync-status sync-' + status + ' mt-1 inline-block';
             el.textContent = message;
+        }
+
+        // === دالة المزامنة (جديدة) ===
+        function syncNow() {
+            if (isSyncing) return;
+            isSyncing = true;
+            setSyncStatus('pending', '🔄 جاري المزامنة...');
+            // إعادة تهيئة كاملة لضمان تحديث كل شيء
+            try {
+                init();
+                showToast('✅ تمت المزامنة');
+            } catch(e) {
+                setSyncStatus('error', '❌ فشلت المزامنة');
+            }
+            isSyncing = false;
         }
 
         function saveSettings() {
@@ -717,7 +741,7 @@
             var search = input.value.toLowerCase().trim();
             var options = list.getElementsByClassName('select-option');
             var visible = 0;
-            options.forEach(function(opt) {
+            Array.from(options).forEach(function(opt) {
                 var name = opt.getAttribute('data-name');
                 var id = opt.getAttribute('data-id');
                 var match = name.toLowerCase().indexOf(search) !== -1 || id.indexOf(search) !== -1;
@@ -740,13 +764,11 @@
             if (!input || !list) return;
             var search = input.value.toLowerCase().trim();
             var options = list.getElementsByClassName('select-option');
-            var visible = 0;
-            options.forEach(function(opt) {
+            Array.from(options).forEach(function(opt) {
                 var name = opt.getAttribute('data-name');
                 var id = opt.getAttribute('data-id');
                 var match = name.toLowerCase().indexOf(search) !== -1 || id.indexOf(search) !== -1;
                 opt.style.display = match ? 'block' : 'none';
-                if (match) visible++;
             });
         }
 
@@ -1307,7 +1329,7 @@
             }
         }
 
-        // === النسخ الاحتياطي والاستعادة (NEW) ===
+        // === النسخ الاحتياطي والاستعادة ===
         function exportBackup() {
             var backupData = {
                 version: '1.0',
