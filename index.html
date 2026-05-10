@@ -599,9 +599,7 @@
                     }
                 });
                 
-                setSyncStatus('ok', '✅ متزامن');
-
-                } catch(e) {
+                setSyncStatus('ok', '✅ متزامن').          } catch(e) {
     var errMsg = e.message || String(e);
     console.error('Init error:', e);
     setSyncStatus('error', '❌ خطأ: ' + errMsg);
